@@ -1,0 +1,264 @@
+/* Complete redesign following user specifications and reference image */
+
+/* ---------- Configuración general ---------- */
+body {
+  margin: 0;
+  /* Updated background with stardust texture and specific gradient */
+  background: radial-gradient(circle at 20% 20%, #050505, #000010 80%),
+    url("https://www.transparenttextures.com/patterns/stardust.png");
+  background-size: cover;
+  overflow: hidden;
+}
+
+/* ---------- Contenedor principal ---------- */
+.scene {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ---------- Animaciones base ---------- */
+@keyframes sway {
+  0% {
+    transform: translateX(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(10px) rotate(2deg);
+  }
+  100% {
+    transform: translateX(-10px) rotate(-2deg);
+  }
+}
+
+@keyframes grassMove {
+  0% {
+    transform: skewX(0deg);
+  }
+  100% {
+    transform: skewX(3deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---------- Flores amarillas ---------- */
+.flower {
+  position: absolute;
+  bottom: 20%;
+  width: 120px;
+  height: 120px;
+  animation: sway 6s ease-in-out infinite alternate;
+}
+
+/* Updated flower design with 3 large petals like reference image */
+.flower.yellow {
+  background: radial-gradient(circle, #ffeb3b 20%, #ffc107 70%, #ff9800 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 15px #fff176, 0 0 30px #fdd835, 0 0 60px #fbc02d;
+}
+
+/* Create 3 petal effect using pseudo-elements */
+.flower.yellow::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(ellipse, #ffeb3b 30%, #ffc107 70%, #ff9800 100%);
+  border-radius: 50% 50% 20% 20%;
+  box-shadow: 0 0 20px #fff176;
+}
+
+.flower.yellow::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: -15px;
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(ellipse, #ffeb3b 30%, #ffc107 70%, #ff9800 100%);
+  border-radius: 50% 20% 50% 20%;
+  transform: rotate(-30deg);
+  box-shadow: 0 0 20px #fff176;
+}
+
+/* Third petal using a separate pseudo-element approach */
+.flower.yellow {
+  position: relative;
+}
+
+.flower.yellow:hover::before {
+  animation: petalGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes petalGlow {
+  0% {
+    box-shadow: 0 0 20px #fff176;
+  }
+  100% {
+    box-shadow: 0 0 40px #fff176, 0 0 60px #fdd835;
+  }
+}
+
+/* Positioning for left and right flowers */
+.flower.left {
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.flower.right {
+  right: 20%;
+  animation-delay: 2s;
+}
+
+/* Add stems to flowers */
+.flower::before {
+  content: "";
+  position: absolute;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 100px;
+  background: linear-gradient(to top, #1b5e20, #2e7d32, #4caf50);
+  border-radius: 4px;
+  z-index: -1;
+}
+
+/* ---------- Tulipán central ---------- */
+.tulip {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 150px;
+  /* Updated tulip design with proper shape and colors */
+  background: radial-gradient(ellipse at center, #ff4d6d 20%, #e91e63 70%, #c2185b 100%);
+  border-radius: 50% 50% 40% 40%;
+  box-shadow: 0 0 20px #ff4d6d, 0 0 40px #e91e63, 0 0 60px #ff4d6d;
+  animation: sway 6s ease-in-out infinite alternate;
+  animation-delay: 1s;
+}
+
+/* Add tulip stem */
+.tulip::before {
+  content: "";
+  position: absolute;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 100px;
+  background: linear-gradient(to top, #1b5e20, #2e7d32, #4caf50);
+  border-radius: 4px;
+  z-index: -1;
+}
+
+/* Add tulip leaves */
+.tulip::after {
+  content: "";
+  position: absolute;
+  bottom: -60px;
+  left: -20px;
+  width: 30px;
+  height: 60px;
+  background: linear-gradient(45deg, #4caf50, #2e7d32);
+  border-radius: 0 50% 50% 0;
+  transform: rotate(-20deg);
+  box-shadow: 40px 10px 0 -5px #4caf50, 40px 10px 0 -3px #2e7d32;
+}
+
+/* ---------- Hierba mejorada ---------- */
+.grass {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  /* Enhanced grass design with better texture */
+  background: repeating-linear-gradient(-45deg, #1b5e20 0px, #2e7d32 6px, #1b5e20 12px),
+    linear-gradient(to top, #0d4f14 0%, #1b5e20 50%, transparent 100%);
+  filter: brightness(1.2) saturate(1.3);
+  animation: grassMove 4s ease-in-out infinite alternate;
+}
+
+/* Add individual grass blades */
+.grass::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(85deg, transparent 40%, #388e3c 41%, #388e3c 43%, transparent 44%),
+    linear-gradient(95deg, transparent 45%, #2e7d32 46%, #2e7d32 48%, transparent 49%),
+    linear-gradient(88deg, transparent 50%, #4caf50 51%, #4caf50 53%, transparent 54%),
+    linear-gradient(92deg, transparent 30%, #66bb6a 31%, #66bb6a 33%, transparent 34%);
+  background-size: 15px 100%, 20px 100%, 12px 100%, 18px 100%;
+  background-position: 0 0, 8px 0, 4px 0, 12px 0;
+  animation: grassMove 6s ease-in-out infinite alternate;
+}
+
+/* Add scattered grass details */
+.grass::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(1px 20px at 10% 90%, #4caf50, transparent),
+    radial-gradient(1px 25px at 25% 85%, #66bb6a, transparent),
+    radial-gradient(1px 18px at 40% 92%, #388e3c, transparent),
+    radial-gradient(1px 22px at 60% 88%, #4caf50, transparent),
+    radial-gradient(1px 28px at 75% 90%, #2e7d32, transparent),
+    radial-gradient(1px 20px at 90% 85%, #66bb6a, transparent);
+  background-repeat: repeat-x;
+  background-size: 100px 100px;
+  animation: grassMove 8s ease-in-out infinite reverse;
+}
+
+/* ---------- Efectos adicionales ---------- */
+/* Add floating particles effect */
+.scene::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 80% 70%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent),
+    radial-gradient(1px 1px at 10% 80%, #fff, transparent), radial-gradient(1px 1px at 90% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 30% 10%, #4fc3f7, transparent), radial-gradient(1px 1px at 70% 90%, #81c784, transparent),
+    radial-gradient(1px 1px at 60% 40%, #ffb74d, transparent);
+  background-repeat: repeat;
+  background-size: 200px 200px, 300px 300px, 150px 150px, 250px 250px, 180px 180px, 220px 220px, 280px 280px, 160px
+    160px;
+  animation: twinkle 8s linear infinite;
+  pointer-events: none;
+}
+
+/* Enhanced glow effects for all flowers */
+.flower.yellow,
+.tulip {
+  position: relative;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.flower.yellow:hover,
+.tulip:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}

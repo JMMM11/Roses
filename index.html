@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020713">
+  <title>Jardín nocturno de rosas</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #020713; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    main { position: fixed; inset: 0; overflow: hidden; }
+    main::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 10vw rgba(0,0,0,.62), inset 0 -10vh 16vh rgba(0,0,0,.4);
+    }
+  </style>
+</head>
+<body>
+  <main aria-label="Jardín nocturno de rosas amarillas generado por código">
+    <canvas id="garden" aria-hidden="true"></canvas>
+  </main>
+
+  <script>
+    "use strict";
+
+    const canvas = document.querySelector("#garden");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const background = document.createElement("canvas");
+    const bg = background.getContext("2d", { alpha: false });
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let w, h, dpr, horizon;
+    let roses = [];
+    let sprites = [];
+    let stars = [];
+    let lights = [];
+    let mouseX = 0;
+    let mouseY = 0;
+    let aimX = 0;
+    let aimY = 0;
+
+    function rand(seed) {
+      const value = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+      return value - Math.floor(value);
+    }
+
+    function petal(pen, width, height, color, shade) {
+      const gradient = pen.createRadialGradient(-width * .18, -height * .35, 2, 0, 0, height);
+      gradient.addColorStop(0, "#fff7b0");
+      gradient.addColorStop(.22, color);
+      gradient.addColorStop(.75, shade);
+      gradient.addColorStop(1, "#814300");
+      pen.fillStyle = gradient;
+      pen.beginPath();
+      pen.moveTo(0, height * .48);
+      pen.bezierCurveTo(-width * .65, height * .3, -width * .6, -height * .2, -width * .2, -height * .46);
+      pen.bezierCurveTo(-width * .08, -height * .55, -width * .03, -height * .39, 0, -height * .36);
+      pen.bezierCurveTo(width * .03, -height * .39, width * .08, -height * .55, width * .2, -height * .46);
+      pen.bezierCurveTo(width * .6, -height * .2, width * .65, height * .3, 0, height * .48);
+      pen.closePath();
+      pen.fill();
+      pen.strokeStyle = "rgba(255,242,145,.42)";
+      pen.lineWidth = 1.3;
+      pen.stroke();
+    }
+
+    function leaf(pen, angle, distance, size, seed) {
+      pen.save();
+      pen.rotate(angle);
+      pen.translate(0, -distance);
+      pen.fillStyle = seed % 2 ? "#0c321c" : "#14502b";
+      pen.beginPath();
+      pen.moveTo(0, -size);
+      for (let i = 1; i < 7; i++) {
+        const y = -size + i * size / 3.5;
+        pen.lineTo((i % 2 ? .58 : .43) * size, y);
+      }
+      pen.lineTo(0, size);
+      for (let i = 6; i > 0; i--) {
+        const y = -size + i * size / 3.5;
+        pen.lineTo(-(i % 2 ? .58 : .43) * size, y);
+      }
+      pen.closePath();
+      pen.fill();
+      pen.strokeStyle = "rgba(92,151,84,.32)";
+      pen.lineWidth = 1;
+      pen.stroke();
+      pen.restore();
+    }
+
+    function createRose(variant) {
+      const sprite = document.createElement("canvas");
+      sprite.width = 320;
+      sprite.height = 320;
+      const pen = sprite.getContext("2d");
+      pen.translate(160, 160);
+
+      pen.shadowColor = "rgba(0,0,0,.72)";
+      pen.shadowBlur = 14;
+      for (let i = 0; i < 10; i++) {
+        leaf(pen, i * Math.PI * 2 / 10 + rand(i + variant) * .25, 104 + rand(i + 30) * 16, 31 + rand(i + 50) * 10, i);
+      }
+
+      const rings = [
+        [8, 58, 94, 96, "#e2a30b", "#bd7000"],
+        [7, 41, 83, 83, "#f1b916", "#cf8302"],
+        [6, 27, 69, 70, "#ffd33b", "#e29c05"],
+        [5, 15, 54, 58, "#ffe36c", "#e9a908"],
+        [4, 6, 38, 44, "#ffd43b", "#c77900"]
+      ];
+
+      rings.forEach((ring, ringIndex) => {
+        const [count, distance, pw, ph, color, shade] = ring;
+        for (let i = 0; i < count; i++) {
+          const seed = variant * 100 + ringIndex * 20 + i;
+          const angle = i * Math.PI * 2 / count + ringIndex * .46 + (rand(seed) - .5) * .17;
+          pen.save();
+          pen.translate(Math.cos(angle) * distance, Math.sin(angle) * distance);
+          pen.rotate(angle + Math.PI / 2);
+          pen.shadowColor = "rgba(107,53,0,.34)";
+          pen.shadowBlur = 7;
+          petal(pen, pw * (.9 + rand(seed + 2) * .2), ph * (.9 + rand(seed + 3) * .18), color, shade);
+          pen.restore();
+        }
+      });
+
+      const spiral = pen.createLinearGradient(-18, -18, 18, 18);
+      spiral.addColorStop(0, "#fff5a8");
+      spiral.addColorStop(.5, "#efb30b");
+      spiral.addColorStop(1, "#7d3e00");
+      pen.strokeStyle = spiral;
+      pen.lineCap = "round";
+      pen.lineWidth = 7;
+      pen.shadowBlur = 3;
+      pen.beginPath();
+      for (let i = 0; i < 46; i++) {
+        const angle = i * .42 + variant * .28;
+        const radius = 1.5 + i * .38;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        i ? pen.lineTo(x, y) : pen.moveTo(x, y);
+      }
+      pen.stroke();
+
+      for (let i = 0; i < 10; i++) {
+        const angle = rand(i + variant * 11) * Math.PI * 2;
+        const distance = 45 + rand(i + 80) * 55;
+        pen.fillStyle = "rgba(255,255,215,.72)";
+        pen.beginPath();
+        pen.arc(Math.cos(angle) * distance, Math.sin(angle) * distance, 1.2 + rand(i + 9) * 1.8, 0, Math.PI * 2);
+        pen.fill();
+      }
+      return sprite;
+    }
+
+    function moon(pen) {
+      const x = w / 2;
+      const y = horizon * .24;
+      const r = Math.min(w, h) * (w < 600 ? .095 : .064);
+      const glow = pen.createRadialGradient(x, y, r * .5, x, y, r * 4.4);
+      glow.addColorStop(0, "rgba(255,250,218,.4)");
+      glow.addColorStop(.28, "rgba(185,215,255,.14)");
+      glow.addColorStop(1, "rgba(80,135,205,0)");
+      pen.fillStyle = glow;
+      pen.beginPath();
+      pen.arc(x, y, r * 4.4, 0, Math.PI * 2);
+      pen.fill();
+
+      const body = pen.createRadialGradient(x - r * .3, y - r * .35, r * .1, x, y, r);
+      body.addColorStop(0, "#fffde7");
+      body.addColorStop(.72, "#e8dfbe");
+      body.addColorStop(1, "#9daaad");
+      pen.fillStyle = body;
+      pen.shadowColor = "rgba(244,246,221,.8)";
+      pen.shadowBlur = r * .55;
+      pen.beginPath();
+      pen.arc(x, y, r, 0, Math.PI * 2);
+      pen.fill();
+      pen.shadowBlur = 0;
+
+      pen.save();
+      pen.beginPath();
+      pen.arc(x, y, r * .98, 0, Math.PI * 2);
+      pen.clip();
+      for (let i = 0; i < 12; i++) {
+        const angle = rand(i + 31) * Math.PI * 2;
+        const distance = rand(i + 44) * r * .68;
+        pen.fillStyle = `rgba(80,96,100,${.06 + rand(i) * .11})`;
+        pen.beginPath();
+        pen.ellipse(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, r * (.07 + rand(i + 90) * .16), r * (.05 + rand(i + 75) * .1), angle, 0, Math.PI * 2);
+        pen.fill();
+      }
+      pen.restore();
+    }
+
+    function tree(pen, x, bottom, size, seed) {
+      const gradient = pen.createLinearGradient(x - size, 0, x + size, 0);
+      gradient.addColorStop(0, "#010503");
+      gradient.addColorStop(.55, "#0a1d11");
+      gradient.addColorStop(1, "#020704");
+      pen.fillStyle = gradient;
+      pen.beginPath();
+      pen.moveTo(x, bottom - size * 4.5);
+      for (let i = 1; i <= 10; i++) {
+        const y = bottom - size * 4.5 + size * 4.5 * i / 10;
+        pen.lineTo(x - Math.sin(i / 10 * Math.PI * .72) * size * (.5 + i / 19) * (.9 + rand(seed + i) * .2), y);
+      }
+      pen.lineTo(x, bottom);
+      for (let i = 10; i >= 1; i--) {
+        const y = bottom - size * 4.5 + size * 4.5 * i / 10;
+        pen.lineTo(x + Math.sin(i / 10 * Math.PI * .72) * size * (.5 + i / 19) * (.9 + rand(seed + i + 20) * .2), y);
+      }
+      pen.closePath();
+      pen.fill();
+    }
+
+    function pond(pen) {
+      const y = horizon + h * .125;
+      const pw = w * (w < 600 ? .43 : .22);
+      const ph = pw * .22;
+      const water = pen.createRadialGradient(w / 2, y, 0, w / 2, y, pw);
+      water.addColorStop(0, "#315a70");
+      water.addColorStop(.65, "#071c29");
+      water.addColorStop(1, "#01070b");
+      pen.fillStyle = water;
+      pen.strokeStyle = "#957839";
+      pen.lineWidth = Math.max(2, ph * .12);
+      pen.beginPath();
+      pen.ellipse(w / 2, y, pw, ph, 0, 0, Math.PI * 2);
+      pen.fill();
+      pen.stroke();
+    }
+
+    function buildBackground() {
+      const sky = bg.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#010611");
+      sky.addColorStop(.43, "#09254d");
+      sky.addColorStop(.68, "#061929");
+      sky.addColorStop(1, "#020805");
+      bg.fillStyle = sky;
+      bg.fillRect(0, 0, w, h);
+
+      stars.forEach(star => {
+        bg.fillStyle = `rgba(255,249,219,${star.a})`;
+        bg.beginPath();
+        bg.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        bg.fill();
+      });
+      moon(bg);
+
+      bg.fillStyle = "#061423";
+      bg.beginPath();
+      bg.moveTo(0, horizon);
+      for (let x = 0; x <= w; x += w / 18) bg.lineTo(x, horizon * (.75 + rand(x + 40) * .12));
+      bg.lineTo(w, horizon);
+      bg.fill();
+
+      for (let i = 0; i < 19; i++) {
+        const side = i % 2 ? 1 : -1;
+        const lane = Math.floor(i / 2) / 9;
+        tree(bg, w / 2 + side * w * (.14 + lane * .47), horizon + h * .08, Math.min(w, h) * (.026 + rand(i) * .017), i * 13);
+      }
+
+      const ground = bg.createLinearGradient(0, horizon, 0, h);
+      ground.addColorStop(0, "#0a2a1a");
+      ground.addColorStop(.55, "#06170d");
+      ground.addColorStop(1, "#010502");
+      bg.fillStyle = ground;
+      bg.fillRect(0, horizon, w, h - horizon);
+
+      const top = w * .037;
+      const bottom = w * (w < 600 ? .45 : .19);
+      const path = bg.createLinearGradient(0, horizon, 0, h);
+      path.addColorStop(0, "#27342f");
+      path.addColorStop(1, "#090d0c");
+      bg.fillStyle = path;
+      bg.beginPath();
+      bg.moveTo(w / 2 - top, horizon);
+      bg.lineTo(w / 2 + top, horizon);
+      bg.lineTo(w / 2 + bottom, h);
+      bg.lineTo(w / 2 - bottom, h);
+      bg.closePath();
+      bg.fill();
+
+      for (let i = 0; i < 360; i++) {
+        const depth = rand(i + 80);
+        const y = horizon + Math.pow(depth, 1.5) * (h - horizon);
+        const half = top + (bottom - top) * ((y - horizon) / (h - horizon));
+        const x = w / 2 + (rand(i + 12) * 2 - 1) * half * .9;
+        bg.fillStyle = i % 9 ? "rgba(140,150,140,.16)" : "rgba(239,184,55,.3)";
+        bg.beginPath();
+        bg.ellipse(x, y, .6 + depth * 2.4, .4 + depth * 1.5, rand(i) * Math.PI, 0, Math.PI * 2);
+        bg.fill();
+      }
+      pond(bg);
+    }
+
+    function buildData() {
+      sprites = Array.from({ length: 6 }, (_, i) => createRose(i + 1));
+      stars = Array.from({ length: Math.max(100, Math.floor(w / 7)) }, (_, i) => ({
+        x: rand(i + 4) * w,
+        y: rand(i + 200) * horizon * .88,
+        r: .35 + rand(i + 500) * 1.35,
+        a: .24 + rand(i + 800) * .72
+      }));
+      lights = Array.from({ length: w < 600 ? 18 : 34 }, (_, i) => ({
+        x: (.04 + rand(i + 12) * .92) * w,
+        y: (.43 + rand(i + 80) * .45) * h,
+        phase: rand(i + 140) * Math.PI * 2,
+        speed: .35 + rand(i + 200) * .7
+      }));
+
+      roses = [];
+      const rows = w < 600 ? 8 : 9;
+      for (let row = 0; row < rows; row++) {
+        const depth = row / (rows - 1);
+        const y = horizon + h * (.065 + Math.pow(depth, 1.45) * .62);
+        const gap = w * (.055 + depth * .105);
+        const outer = w * (.15 + depth * .48);
+        const count = Math.round(5 + depth * (w < 600 ? 3 : 7));
+        [-1, 1].forEach(side => {
+          for (let item = 0; item < count; item++) {
+            const ratio = item / Math.max(1, count - 1);
+            const seed = row * 100 + item * 7 + (side > 0 ? 3 : 0);
+            roses.push({
+              x: w / 2 + side * (gap + Math.pow(ratio, .8) * outer) + (rand(seed) - .5) * w * .018,
+              y: y + (rand(seed + 1) - .5) * h * .014,
+              scale: (.055 + Math.pow(depth, 1.65) * .43) * (.86 + rand(seed + 2) * .24),
+              sprite: Math.floor(rand(seed + 3) * sprites.length),
+              phase: rand(seed + 4) * Math.PI * 2,
+              depth
+            });
+          }
+        });
+      }
+      roses.sort((a, b) => a.y - b.y);
+    }
+
+    function resize() {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      w = innerWidth;
+      h = innerHeight;
+      horizon = h * (w < 600 ? .37 : .42);
+      canvas.width = background.width = Math.round(w * dpr);
+      canvas.height = background.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      bg.setTransform(dpr, 0, 0, dpr, 0, 0);
+      buildData();
+      buildBackground();
+    }
+
+    function mist(time) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 5; i++) {
+        const speed = .006 + i * .001;
+        const x = ((time * speed + i * w * .3) % (w * 1.5)) - w * .25;
+        const y = horizon + h * (.04 + i * .034);
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, w * .24);
+        glow.addColorStop(0, "rgba(190,210,216,.05)");
+        glow.addColorStop(1, "rgba(190,210,216,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.ellipse(x, y, w * .25, h * .07, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawRose(rose, time) {
+      const size = 320 * rose.scale;
+      const sway = reduceMotion ? 0 : Math.sin(time * .00065 + rose.phase) * (.008 + rose.depth * .016);
+      ctx.save();
+      ctx.translate(rose.x + mouseX * rose.depth * .3, rose.y + mouseY * rose.depth * .12);
+      ctx.rotate(sway);
+      ctx.shadowColor = "rgba(0,0,0,.65)";
+      ctx.shadowBlur = 6 + rose.depth * 15;
+      ctx.drawImage(sprites[rose.sprite], -size / 2, -size * .66, size, size);
+      ctx.restore();
+    }
+
+    function fireflies(time) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      lights.forEach(light => {
+        const pulse = Math.max(0, Math.sin(time * .001 * light.speed + light.phase));
+        if (pulse < .15) return;
+        const x = light.x + Math.sin(time * .00035 + light.phase) * 17;
+        const y = light.y + Math.cos(time * .00028 + light.phase) * 10;
+        ctx.fillStyle = `rgba(255,224,91,${pulse * .8})`;
+        ctx.shadowColor = "#ffc52e";
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.2 + pulse, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function frame(time) {
+      mouseX += (aimX - mouseX) * .035;
+      mouseY += (aimY - mouseY) * .035;
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(mouseX * .1, mouseY * .06);
+      ctx.drawImage(background, -2, -2, w + 4, h + 4);
+      ctx.restore();
+      mist(time);
+      roses.forEach(rose => drawRose(rose, time));
+      fireflies(time);
+      requestAnimationFrame(frame);
+    }
+
+    addEventListener("pointermove", event => {
+      if (reduceMotion) return;
+      aimX = (event.clientX / w - .5) * -18;
+      aimY = (event.clientY / h - .5) * -10;
+    }, { passive: true });
+    addEventListener("pointerleave", () => { aimX = 0; aimY = 0; });
+    addEventListener("resize", resize);
+
+    resize();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
