@@ -1,0 +1,109 @@
+:root {
+  --sky-top: #fef3c7;
+  --sky-mid: #fde68a;
+  --sky-bottom: #fbbf24;
+  --ink: #7c4a03;
+  --grass-dark: #3f6212;
+  --grass-mid: #65a30d;
+  --grass-light: #84cc16;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  position: relative;
+  background: linear-gradient(to bottom, var(--sky-top), var(--sky-mid) 45%, var(--sky-bottom) 68%);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+#scene { display: block; width: 100%; height: 100%; }
+
+.title-overlay {
+  position: absolute;
+  top: clamp(1.25rem, 4vw, 2.5rem);
+  left: 50%;
+  z-index: 10;
+  width: min(90vw, 42rem);
+  transform: translateX(-50%);
+  color: var(--ink);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, .5);
+  pointer-events: none;
+}
+
+.title-overlay h1 {
+  font-size: clamp(1.35rem, 4vw, 2.4rem);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: .03em;
+}
+
+.title-overlay p {
+  margin-top: .25rem;
+  opacity: .75;
+  font: .75rem/1.3 system-ui, sans-serif;
+  letter-spacing: .04em;
+}
+
+.sun { animation: pulse 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+.rose-group {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: sway ease-in-out infinite;
+}
+
+.grass-blade {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: grass-wave ease-in-out infinite;
+}
+
+.flyer { animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.wing { animation: flap .35s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+
+@keyframes pulse { 0%, 100% { opacity: .9; } 50% { opacity: 1; } }
+@keyframes sway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+@keyframes grass-wave { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(.4); } }
+
+@keyframes fly-path-one {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(60px, -40px); }
+  50% { transform: translate(120px, 10px); }
+  75% { transform: translate(60px, 40px); }
+}
+
+@keyframes fly-path-two {
+  0% { transform: translate(0, 0) scaleX(-1); }
+  25% { transform: translate(-70px, 30px) scaleX(-1); }
+  50% { transform: translate(-30px, -30px) scaleX(-1); }
+  75% { transform: translate(-90px, 5px) scaleX(-1); }
+  100% { transform: translate(0, 0) scaleX(-1); }
+}
+
+.flyer-one { animation-name: fly-path-one; animation-duration: 9s; }
+.flyer-two { animation-name: fly-path-two; animation-duration: 11s; }
+.flyer-three { animation: fly-path-one 13s ease-in-out infinite reverse; }
+
+footer {
+  position: absolute;
+  bottom: .4rem;
+  width: 100%;
+  color: rgba(124, 74, 3, .55);
+  font: .65rem/1.2 system-ui, sans-serif;
+  letter-spacing: .02em;
+  text-align: center;
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .title-overlay p { font-size: .68rem; }
+  footer { font-size: .56rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rose-group, .grass-blade, .flyer, .wing, .sun { animation: none !important; }
+}

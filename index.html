@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f9d86f">
+  <meta name="description" content="Un jardín animado de rosas amarillas dibujado completamente con SVG, CSS y JavaScript.">
+  <title>Jardín de Rosas Amarillas</title>
+
+  <style>
+    :root {
+      --sky-middle: #ffeaa0;
+      --brown: #69410f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      position: relative;
+      background: var(--sky-middle);
+      color: var(--brown);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .garden {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 28rem;
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    #garden-scene {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .garden-title {
+      position: absolute;
+      z-index: 10;
+      top: clamp(1.4rem, 6vh, 3.6rem);
+      left: 50%;
+      width: min(92vw, 48rem);
+      padding: 0 .8rem;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .garden-title::after {
+      content: "";
+      display: block;
+      width: clamp(4rem, 12vw, 7rem);
+      height: 1px;
+      margin: .85rem auto 0;
+      background: linear-gradient(90deg, transparent, rgba(117, 72, 13, .55), transparent);
+    }
+
+    .garden-title h1 {
+      color: #75480d;
+      font-size: clamp(1.8rem, 4.3vw, 3.65rem);
+      font-style: italic;
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: .025em;
+      text-shadow: 0 2px 0 rgba(255, 255, 255, .42), 0 10px 28px rgba(131, 76, 0, .12);
+    }
+
+    .garden-title h1 span {
+      white-space: nowrap;
+    }
+
+    .garden-title p {
+      margin-top: .55rem;
+      color: rgba(89, 84, 44, .78);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: clamp(.7rem, 1.25vw, .88rem);
+      font-weight: 500;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .garden-note {
+      position: absolute;
+      z-index: 10;
+      right: 50%;
+      bottom: max(.65rem, env(safe-area-inset-bottom));
+      padding: .38rem .8rem;
+      transform: translateX(50%);
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 999px;
+      background: rgba(30, 66, 27, .28);
+      color: rgba(255, 255, 234, .78);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: clamp(.56rem, 1vw, .68rem);
+      letter-spacing: .05em;
+      white-space: nowrap;
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+    }
+
+    .sun-halo {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: sun-breathe 7s ease-in-out infinite;
+    }
+
+    .sun-rays {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: turn-rays 42s linear infinite;
+    }
+
+    .cloud-drift {
+      animation: cloud-drift var(--cloud-speed, 24s) ease-in-out infinite alternate;
+    }
+
+    .pollen {
+      animation: pollen-float var(--float-time, 6s) ease-in-out var(--float-delay, 0s) infinite;
+    }
+
+    .grass-blade {
+      transform-box: fill-box;
+      transform-origin: 50% 100%;
+      animation: grass-wave var(--wave-time, 3.5s) ease-in-out var(--wave-delay, 0s) infinite;
+    }
+
+    .flower-sway {
+      transform-box: fill-box;
+      transform-origin: 50% 100%;
+      animation: flower-sway var(--sway-time, 4.4s) ease-in-out var(--sway-delay, 0s) infinite;
+      will-change: transform;
+    }
+
+    .bloom-breathe {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: bloom-breathe var(--bloom-time, 3.8s) ease-in-out var(--bloom-delay, 0s) infinite;
+    }
+
+    .rose-position.is-back {
+      opacity: .9;
+    }
+
+    .stem-highlight {
+      opacity: .42;
+    }
+
+    .bee-flight,
+    .butterfly-flight {
+      transform-box: fill-box;
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    .bee-flight {
+      animation: bee-route 12s ease-in-out infinite;
+    }
+
+    .butterfly-flight {
+      animation: butterfly-route 16s ease-in-out -4s infinite;
+    }
+
+    .bee-wing,
+    .butterfly-wing {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: wing-flap .3s ease-in-out infinite alternate;
+    }
+
+    .butterfly-wing {
+      animation-duration: .62s;
+    }
+
+    @keyframes sun-breathe {
+      0%, 100% { opacity: .64; transform: scale(.96); }
+      50% { opacity: .92; transform: scale(1.07); }
+    }
+
+    @keyframes turn-rays {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes cloud-drift {
+      from { transform: translateX(-16px); }
+      to { transform: translateX(24px); }
+    }
+
+    @keyframes pollen-float {
+      0%, 100% { opacity: .15; transform: translate(0, 0); }
+      45% { opacity: .8; transform: translate(9px, -18px); }
+      70% { opacity: .48; transform: translate(16px, -10px); }
+    }
+
+    @keyframes grass-wave {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    @keyframes flower-sway {
+      0%, 100% { transform: rotate(-1.7deg); }
+      45% { transform: rotate(2.4deg); }
+      72% { transform: rotate(1deg); }
+    }
+
+    @keyframes bloom-breathe {
+      0%, 100% { transform: rotate(-.8deg) scale(1); }
+      50% { transform: rotate(1deg) scale(1.025); }
+    }
+
+    @keyframes bee-route {
+      0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+      18% { transform: translate(78px, -34px) rotate(7deg); }
+      42% { transform: translate(164px, 10px) rotate(-5deg); }
+      67% { transform: translate(92px, 54px) rotate(7deg); }
+      84% { transform: translate(28px, 25px) rotate(-3deg); }
+    }
+
+    @keyframes butterfly-route {
+      0%, 100% { transform: translate(0, 0) rotate(4deg); }
+      22% { transform: translate(-86px, 32px) rotate(-8deg); }
+      48% { transform: translate(-156px, -16px) rotate(5deg); }
+      72% { transform: translate(-92px, -54px) rotate(-7deg); }
+    }
+
+    @keyframes wing-flap {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(.28); }
+    }
+
+    @media (max-width: 640px) {
+      .garden-title {
+        top: max(1.15rem, env(safe-area-inset-top));
+      }
+
+      .garden-title h1 {
+        font-size: clamp(1.8rem, 9vw, 2.7rem);
+      }
+
+      .garden-title h1 span {
+        display: block;
+      }
+
+      .garden-title p {
+        max-width: 18rem;
+        margin-inline: auto;
+        font-size: clamp(.62rem, 2.6vw, .7rem);
+        line-height: 1.45;
+        letter-spacing: .1em;
+      }
+
+      .garden-note {
+        bottom: max(.45rem, env(safe-area-inset-bottom));
+      }
+    }
+
+    @media (max-height: 560px) and (orientation: landscape) {
+      .garden-title {
+        top: .8rem;
+      }
+
+      .garden-title p,
+      .garden-title::after {
+        display: none;
+      }
+
+      .garden-note {
+        right: .55rem;
+        bottom: .55rem;
+        transform: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sun-halo,
+      .sun-rays,
+      .cloud-drift,
+      .pollen,
+      .grass-blade,
+      .flower-sway,
+      .bloom-breathe,
+      .bee-flight,
+      .butterfly-flight,
+      .bee-wing,
+      .butterfly-wing {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="garden" aria-labelledby="garden-heading">
+    <header class="garden-title">
+      <h1 id="garden-heading"><span>Jardín de</span> <span>Rosas Amarillas</span></h1>
+      <p>Un pequeño rincón bañado por el sol</p>
+    </header>
+
+    <svg id="garden-scene" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMax slice" role="img" aria-labelledby="scene-title scene-description" xmlns="http://www.w3.org/2000/svg">
+      <title id="scene-title">Jardín animado de rosas amarillas</title>
+      <desc id="scene-description">Veintiuna rosas amarillas hechas con pétalos SVG se mecen suavemente sobre un campo de césped mientras una abeja y una mariposa vuelan entre ellas.</desc>
+
+      <defs>
+        <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff9e7"/>
+          <stop offset=".48" stop-color="#ffe89b"/>
+          <stop offset="1" stop-color="#f4c453"/>
+        </linearGradient>
+
+        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#fffde8" stop-opacity=".98"/>
+          <stop offset=".35" stop-color="#fff1a8" stop-opacity=".72"/>
+          <stop offset="1" stop-color="#ffd65f" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="sunCore" cx="36%" cy="32%" r="70%">
+          <stop offset="0" stop-color="#fffef1"/>
+          <stop offset=".48" stop-color="#ffe588"/>
+          <stop offset="1" stop-color="#f4bd35"/>
+        </radialGradient>
+
+        <linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#b8cc74"/>
+          <stop offset="1" stop-color="#90b359"/>
+        </linearGradient>
+
+        <linearGradient id="hillNear" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#78a94b"/>
+          <stop offset="1" stop-color="#4e8137"/>
+        </linearGradient>
+
+        <linearGradient id="groundGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#5f963d"/>
+          <stop offset=".5" stop-color="#396e31"/>
+          <stop offset="1" stop-color="#1e4928"/>
+        </linearGradient>
+
+        <linearGradient id="stemGradient" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#255526"/>
+          <stop offset=".45" stop-color="#397a34"/>
+          <stop offset="1" stop-color="#183f20"/>
+        </linearGradient>
+
+        <linearGradient id="leafGradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#78ae49"/>
+          <stop offset=".45" stop-color="#397b37"/>
+          <stop offset="1" stop-color="#1f562a"/>
+        </linearGradient>
+
+        <radialGradient id="petalOuter" cx="34%" cy="25%" r="78%">
+          <stop offset="0" stop-color="#fff7a8"/>
+          <stop offset=".48" stop-color="#f9cf3f"/>
+          <stop offset="1" stop-color="#d99705"/>
+        </radialGradient>
+
+        <radialGradient id="petalMiddle" cx="38%" cy="24%" r="76%">
+          <stop offset="0" stop-color="#fffbd0"/>
+          <stop offset=".42" stop-color="#ffdd54"/>
+          <stop offset="1" stop-color="#e4a40e"/>
+        </radialGradient>
+
+        <radialGradient id="petalInner" cx="34%" cy="28%" r="75%">
+          <stop offset="0" stop-color="#fffce3"/>
+          <stop offset=".48" stop-color="#ffe977"/>
+          <stop offset="1" stop-color="#efb51d"/>
+        </radialGradient>
+
+        <linearGradient id="budGradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff8ad"/>
+          <stop offset=".5" stop-color="#ffd83f"/>
+          <stop offset="1" stop-color="#d89404"/>
+        </linearGradient>
+
+        <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="9"/>
+        </filter>
+
+        <filter id="roseShadow" x="-40%" y="-40%" width="180%" height="190%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3.2" flood-color="#7d5d05" flood-opacity=".26"/>
+        </filter>
+
+        <filter id="groundBlur" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="5"/>
+        </filter>
+
+        <path id="outerPetal" d="M0 8 C-17 8-28-4-23-20 C-19-34-2-39 11-28 C25-16 20 2 0 8Z"/>
+        <path id="middlePetal" d="M0 7 C-13 7-21-3-18-15 C-14-28 0-31 10-22 C20-12 16 2 0 7Z"/>
+        <path id="innerPetal" d="M0 5 C-9 5-14-2-12-11 C-9-20 1-22 8-15 C14-8 11 2 0 5Z"/>
+
+        <g id="leaf">
+          <path d="M0 0 C8-17 24-29 42-24 C40-8 22 8 0 0Z" fill="url(#leafGradient)"/>
+          <path d="M3-2 C14-8 25-15 37-21" fill="none" stroke="#a0c86b" stroke-width="1.3" stroke-linecap="round" opacity=".62"/>
+          <path d="M17-10 L17-18 M24-14 L27-21" fill="none" stroke="#86b75a" stroke-width=".8" stroke-linecap="round" opacity=".48"/>
+        </g>
+
+        <g id="openRose" filter="url(#roseShadow)">
+          <path d="M-29 15 Q-13 5 0 10 Q14 4 30 15 Q17 26 0 22 Q-17 26-29 15Z" fill="#287039" opacity=".88"/>
+          <path d="M0 11 L-8 29 L2 21 L12 30 L10 10Z" fill="#2e7435"/>
+
+          <g fill="url(#petalOuter)" stroke="#d99b0d" stroke-width=".7" stroke-opacity=".6">
+            <use href="#outerPetal" transform="rotate(0)"/>
+            <use href="#outerPetal" transform="rotate(45)"/>
+            <use href="#outerPetal" transform="rotate(90)"/>
+            <use href="#outerPetal" transform="rotate(135)"/>
+            <use href="#outerPetal" transform="rotate(180)"/>
+            <use href="#outerPetal" transform="rotate(225)"/>
+            <use href="#outerPetal" transform="rotate(270)"/>
+            <use href="#outerPetal" transform="rotate(315)"/>
+          </g>
+
+          <g fill="url(#petalMiddle)" stroke="#e7ad19" stroke-width=".6" transform="scale(.76) rotate(23)">
+            <use href="#middlePetal" transform="rotate(0)"/>
+            <use href="#middlePetal" transform="rotate(60)"/>
+            <use href="#middlePetal" transform="rotate(120)"/>
+            <use href="#middlePetal" transform="rotate(180)"/>
+            <use href="#middlePetal" transform="rotate(240)"/>
+            <use href="#middlePetal" transform="rotate(300)"/>
+          </g>
+
+          <g fill="url(#petalInner)" stroke="#e9b72b" stroke-width=".55" transform="scale(.53) rotate(-8)">
+            <use href="#innerPetal" transform="rotate(0)"/>
+            <use href="#innerPetal" transform="rotate(72)"/>
+            <use href="#innerPetal" transform="rotate(144)"/>
+            <use href="#innerPetal" transform="rotate(216)"/>
+            <use href="#innerPetal" transform="rotate(288)"/>
+          </g>
+
+          <circle r="8.8" fill="#f6bd20"/>
+          <circle cx="-2.4" cy="-2.2" r="4.8" fill="#ffe774" opacity=".82"/>
+          <path d="M-9 1 C-7-7 5-10 10-4 C15 3 7 11-1 8 C-7 6-7 0-2-2 C2-4 5-1 4 3" fill="none" stroke="#b87800" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M-18-16 Q-8-25 2-22" fill="none" stroke="#fff9be" stroke-width="2.1" stroke-linecap="round" opacity=".68"/>
+        </g>
+
+        <g id="roseBud" filter="url(#roseShadow)">
+          <path d="M-17 5 Q-8-2 0 2 Q8-2 17 5 L8 19 L0 12 L-8 19Z" fill="#2e7435"/>
+          <ellipse cy="-9" rx="18" ry="25" fill="url(#budGradient)" stroke="#d99b0d" stroke-width=".8"/>
+          <path d="M0-33 C-11-23-12-5 0 12 C5-2 6-18 0-33Z" fill="#fff079" opacity=".75"/>
+          <path d="M-16-14 C-7-20 2-18 7-9 C1-4-5 2-10 11 C-16 3-18-5-16-14Z" fill="#f1b71d" opacity=".82"/>
+          <path d="M15-14 C8-20 1-17-3-10 C4-7 9-1 12 8 C17 1 18-7 15-14Z" fill="#ffdf4f" opacity=".9"/>
+          <path d="M-7-27 Q0-20 8-27" fill="none" stroke="#fff9c5" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+        </g>
+
+        <g id="bee">
+          <ellipse class="bee-wing" cx="-5" cy="-7" rx="8" ry="12" fill="#fffdf0" stroke="#d6ae48" stroke-width=".8" opacity=".78"/>
+          <ellipse class="bee-wing" cx="7" cy="-7" rx="8" ry="12" fill="#fffdf0" stroke="#d6ae48" stroke-width=".8" opacity=".78"/>
+          <ellipse cx="1" cy="2" rx="7" ry="11" fill="#efb81f" transform="rotate(-8)"/>
+          <path d="M-5-1 Q1 2 7 0 M-5 4 Q1 7 7 5" fill="none" stroke="#302818" stroke-width="3"/>
+          <circle cx="0" cy="-9" r="4.8" fill="#302818"/>
+          <path d="M-2-12 Q-6-18-9-15 M3-12 Q8-18 10-14" fill="none" stroke="#302818" stroke-width="1" stroke-linecap="round"/>
+        </g>
+
+        <g id="butterfly">
+          <ellipse class="butterfly-wing" cx="-8" cy="-3" rx="12" ry="17" fill="#fff1a8" stroke="#c97916" stroke-width="1.2" transform="rotate(-22 -8 -3)"/>
+          <ellipse class="butterfly-wing" cx="8" cy="-3" rx="12" ry="17" fill="#ffd45c" stroke="#c97916" stroke-width="1.2" transform="rotate(22 8 -3)"/>
+          <circle cx="-9" cy="-5" r="3" fill="#e59b1a" opacity=".75"/>
+          <circle cx="9" cy="-5" r="3" fill="#e59b1a" opacity=".75"/>
+          <ellipse cy="2" rx="2.7" ry="11" fill="#59411b"/>
+          <path d="M-1-8 Q-5-15-9-15 M1-8 Q5-15 9-15" fill="none" stroke="#59411b" stroke-width="1" stroke-linecap="round"/>
+        </g>
+      </defs>
+
+      <rect width="1200" height="800" fill="url(#skyGradient)"/>
+
+      <g transform="translate(969 124)">
+        <circle class="sun-halo" r="142" fill="url(#sunGlow)"/>
+        <g class="sun-rays" opacity=".27" stroke="#f5c244" stroke-width="3" stroke-linecap="round">
+          <path d="M0-72V-91 M0 72V91 M-72 0H-91 M72 0H91 M-51-51L-64-64 M51 51L64 64 M51-51L64-64 M-51 51L-64 64"/>
+        </g>
+        <circle r="53" fill="url(#sunCore)"/>
+        <circle cx="-17" cy="-18" r="13" fill="#fff" opacity=".22" filter="url(#softBlur)"/>
+      </g>
+
+      <g transform="translate(155 218)" opacity=".42">
+        <g class="cloud-drift" style="--cloud-speed: 23s">
+          <ellipse cx="0" cy="7" rx="54" ry="17" fill="#fffbed"/>
+          <circle cx="-25" r="22" fill="#fffbed"/>
+          <circle cx="11" cy="-8" r="31" fill="#fffbed"/>
+          <circle cx="38" cy="3" r="20" fill="#fffbed"/>
+        </g>
+      </g>
+
+      <g transform="translate(725 275)" opacity=".25">
+        <g class="cloud-drift" style="--cloud-speed: 29s">
+          <ellipse cx="0" cy="5" rx="43" ry="13" fill="#fffbed"/>
+          <circle cx="-20" r="17" fill="#fffbed"/>
+          <circle cx="8" cy="-8" r="24" fill="#fffbed"/>
+          <circle cx="31" cy="1" r="16" fill="#fffbed"/>
+        </g>
+      </g>
+
+      <g id="pollen-layer" aria-hidden="true"></g>
+
+      <path d="M0 430 C190 365 360 399 520 421 C720 450 897 363 1200 408 L1200 555 L0 555Z" fill="url(#hillFar)"/>
+      <path d="M0 481 C238 428 407 455 601 490 C790 524 979 436 1200 453 L1200 603 L0 603Z" fill="url(#hillNear)"/>
+      <path d="M0 478 C250 453 424 486 616 503 C819 521 1010 477 1200 481 L1200 800 L0 800Z" fill="url(#groundGradient)"/>
+      <path d="M0 488 C288 462 526 515 761 503 C936 494 1060 469 1200 483" fill="none" stroke="#9bc35b" stroke-width="5" opacity=".35"/>
+
+      <g id="grass-back" aria-hidden="true"></g>
+      <g id="roses-back"></g>
+      <g id="grass-middle" aria-hidden="true"></g>
+      <g id="roses-middle"></g>
+      <g id="roses-front"></g>
+      <g id="grass-front" aria-hidden="true"></g>
+
+      <g transform="translate(305 345)">
+        <g class="bee-flight">
+          <use href="#bee"/>
+        </g>
+      </g>
+
+      <g transform="translate(930 390)">
+        <g class="butterfly-flight">
+          <use href="#butterfly"/>
+        </g>
+      </g>
+
+      <rect x="0" y="0" width="1200" height="800" fill="none" stroke="#7a4c16" stroke-width="20" opacity=".035"/>
+    </svg>
+
+    <footer class="garden-note">Hecho 100% con SVG, CSS y JavaScript</footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SVG_NS = "http://www.w3.org/2000/svg";
+      let seed = 20250921;
+
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+
+      const between = (min, max) => min + (max - min) * random();
+      const choose = (items) => items[Math.floor(random() * items.length)];
+
+      const svgElement = (name, attributes = {}) => {
+        const node = document.createElementNS(SVG_NS, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+        return node;
+      };
+
+      const useSymbol = (id, attributes = {}) => {
+        const node = svgElement("use", attributes);
+        node.setAttribute("href", `#${id}`);
+        return node;
+      };
+
+      const grassPalette = ["#285729", "#31662c", "#3f7731", "#588c36", "#76a644"];
+
+      function addGrass(targetId, count, yMin, yMax, heightMin, heightMax, opacityMin = .7) {
+        const target = document.getElementById(targetId);
+
+        for (let index = 0; index < count; index += 1) {
+          const x = between(-10, 1210);
+          const y = between(yMin, yMax);
+          const height = between(heightMin, heightMax);
+          const lean = between(-9, 9);
+          const blade = svgElement("path", {
+            d: `M ${x.toFixed(1)} ${y.toFixed(1)} Q ${(x + lean * .45).toFixed(1)} ${(y - height * .58).toFixed(1)} ${(x + lean).toFixed(1)} ${(y - height).toFixed(1)}`,
+            fill: "none",
+            stroke: choose(grassPalette),
+            "stroke-width": between(2.3, 5.8).toFixed(1),
+            "stroke-linecap": "round",
+            opacity: between(opacityMin, 1).toFixed(2),
+            class: "grass-blade"
+          });
+
+          blade.style.setProperty("--wave-time", `${between(2.7, 5.1).toFixed(2)}s`);
+          blade.style.setProperty("--wave-delay", `${between(-5, 0).toFixed(2)}s`);
+          target.appendChild(blade);
+        }
+      }
+
+      function addLeaf(parent, height, side, scale, rotation) {
+        const anchorX = side * between(-1.5, 3.5);
+        const anchorY = -height * between(.36, .7);
+        const leafGroup = svgElement("g", {
+          transform: `translate(${anchorX.toFixed(1)} ${anchorY.toFixed(1)}) rotate(${rotation}) scale(${(side * scale).toFixed(2)} ${scale.toFixed(2)})`
+        });
+        leafGroup.appendChild(useSymbol("leaf"));
+        parent.appendChild(leafGroup);
+      }
+
+      function createRose({ x, y, scale, index, depth, bud = false }) {
+        const position = svgElement("g", {
+          class: `rose-position ${depth === "back" ? "is-back" : ""}`,
+          transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(3)})`,
+          "aria-label": bud ? `Rosa amarilla en capullo ${index + 1}` : `Rosa amarilla abierta ${index + 1}`
+        });
+
+        const shadow = svgElement("ellipse", {
+          cx: "0",
+          cy: "2",
+          rx: bud ? "17" : "24",
+          ry: "5",
+          fill: "#173a20",
+          opacity: ".28",
+          filter: "url(#groundBlur)"
+        });
+        position.appendChild(shadow);
+
+        const flower = svgElement("g", { class: "flower-sway" });
+        flower.style.setProperty("--sway-time", `${between(3.5, 6.2).toFixed(2)}s`);
+        flower.style.setProperty("--sway-delay", `${between(-6, 0).toFixed(2)}s`);
+
+        const height = between(depth === "back" ? 122 : 155, depth === "front" ? 224 : 205);
+        const bend = between(-13, 13);
+        const controlA = between(-12, 8);
+        const controlB = between(-7, 12);
+        const stemPath = `M 0 2 C ${controlA.toFixed(1)} ${(-height * .32).toFixed(1)}, ${controlB.toFixed(1)} ${(-height * .72).toFixed(1)}, ${bend.toFixed(1)} ${(-height).toFixed(1)}`;
+
+        flower.appendChild(svgElement("path", {
+          d: stemPath,
+          fill: "none",
+          stroke: "url(#stemGradient)",
+          "stroke-width": "7",
+          "stroke-linecap": "round"
+        }));
+
+        flower.appendChild(svgElement("path", {
+          d: stemPath,
+          fill: "none",
+          stroke: "#9bc66d",
+          "stroke-width": "1.3",
+          "stroke-linecap": "round",
+          class: "stem-highlight"
+        }));
+
+        addLeaf(flower, height, -1, between(.72, .96), between(-28, -10));
+        addLeaf(flower, height, 1, between(.64, .9), between(-5, 17));
+
+        if (!bud || random() > .35) {
+          addLeaf(flower, height, random() > .5 ? -1 : 1, between(.48, .68), between(-18, 12));
+        }
+
+        const thornSide = random() > .5 ? 1 : -1;
+        flower.appendChild(svgElement("path", {
+          d: `M ${thornSide * 1.5} ${(-height * .27).toFixed(1)} l ${thornSide * 8} -9 l ${thornSide * -5} 12`,
+          fill: "#245927",
+          opacity: ".75"
+        }));
+
+        const headAngle = between(-7, 7);
+        const headScale = bud ? between(.88, 1.05) : between(.9, 1.09);
+        const headAnchor = svgElement("g", {
+          transform: `translate(${bend.toFixed(1)} ${(-height).toFixed(1)}) rotate(${headAngle.toFixed(1)}) scale(${headScale.toFixed(2)} ${bud ? headScale.toFixed(2) : between(.88, 1.02).toFixed(2)})`
+        });
+        const bloom = svgElement("g", { class: "bloom-breathe" });
+        bloom.style.setProperty("--bloom-time", `${between(3.1, 5.4).toFixed(2)}s`);
+        bloom.style.setProperty("--bloom-delay", `${between(-5, 0).toFixed(2)}s`);
+        bloom.appendChild(useSymbol(bud ? "roseBud" : "openRose"));
+        headAnchor.appendChild(bloom);
+        flower.appendChild(headAnchor);
+        position.appendChild(flower);
+
+        return position;
+      }
+
+      function plantRow({ targetId, count, y, scaleMin, scaleMax, depth, buds }) {
+        const target = document.getElementById(targetId);
+        const spacing = 1200 / count;
+
+        for (let index = 0; index < count; index += 1) {
+          const x = spacing * (index + .5) + between(-spacing * .27, spacing * .27);
+          const rose = createRose({
+            x,
+            y: y + between(-12, 12),
+            scale: between(scaleMin, scaleMax),
+            index,
+            depth,
+            bud: buds.includes(index)
+          });
+          target.appendChild(rose);
+        }
+      }
+
+      function addPollen() {
+        const target = document.getElementById("pollen-layer");
+        for (let index = 0; index < 22; index += 1) {
+          const mote = svgElement("circle", {
+            cx: between(40, 1160).toFixed(1),
+            cy: between(190, 510).toFixed(1),
+            r: between(1.1, 2.8).toFixed(1),
+            fill: choose(["#fff9cf", "#ffe989", "#fffef1"]),
+            class: "pollen"
+          });
+          mote.style.setProperty("--float-time", `${between(4.5, 8.5).toFixed(2)}s`);
+          mote.style.setProperty("--float-delay", `${between(-8, 0).toFixed(2)}s`);
+          target.appendChild(mote);
+        }
+      }
+
+      addPollen();
+      addGrass("grass-back", 155, 481, 548, 12, 31, .55);
+      addGrass("grass-middle", 125, 540, 690, 18, 44, .58);
+
+      plantRow({ targetId: "roses-back", count: 7, y: 552, scaleMin: .58, scaleMax: .72, depth: "back", buds: [1] });
+      plantRow({ targetId: "roses-middle", count: 7, y: 666, scaleMin: .78, scaleMax: .98, depth: "middle", buds: [5] });
+      plantRow({ targetId: "roses-front", count: 7, y: 795, scaleMin: 1.02, scaleMax: 1.24, depth: "front", buds: [2] });
+
+      addGrass("grass-front", 125, 734, 815, 28, 72, .72);
+    })();
+  </script>
+</body>
+</html>
